@@ -1,7 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Jost, DM_Sans } from 'next/font/google'
-import Header from '../components/header'
+import Header from '@/components/header'
 import { Providers } from './providers'
 
 const jost = Jost({ 
