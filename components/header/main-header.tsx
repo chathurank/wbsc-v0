@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { Search, ShoppingCart, ChevronDown, Scan, Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,21 +11,15 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Logo } from "@/components/logo"
 
 export function MainHeader() {
   return (
-    <div className="container py-4">
-      <div className="flex items-center gap-4 sm:gap-8">
+    <div className="container py-4 sm:py-6">
+      <div className="flex items-center gap-4 sm:gap-8 h-16">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
-          <Image
-            src="/logo.svg"
-            alt="Würth Baer Supply Company"
-            width={320}
-            height={68}
-            className="h-8 w-auto sm:h-12 dark:invert"
-            priority
-          />
+          <Logo className="w-40 h-8 sm:w-60 sm:h-12" />
         </Link>
 
         {/* Search */}
