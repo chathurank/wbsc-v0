@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Jost, DM_Sans } from 'next/font/google'
 import Header from '@/components/header'
+import { Footer } from '@/components/footer/footer'
 import { Providers } from './providers'
 
 const jost = Jost({ 
@@ -30,11 +31,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${jost.variable} ${dmSans.variable}`}>
-      <body className="font-sans">
+      <body className="font-sans min-h-screen flex flex-col">
         <Providers>
           <Header />
-          <main>{children}</main>
-          {/* Footer component can be added here */}
+          <main className="flex-1">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>

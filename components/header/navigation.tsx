@@ -25,9 +25,21 @@ export function Navigation() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Category 1</DropdownMenuItem>
-                <DropdownMenuItem>Category 2</DropdownMenuItem>
-                <DropdownMenuItem>Category 3</DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/categories/fasteners" className="w-full">
+                    Fasteners
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/categories/tools" className="w-full">
+                    Tools
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/categories/safety-equipment" className="w-full">
+                    Safety Equipment
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </li>
