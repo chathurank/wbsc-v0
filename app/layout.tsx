@@ -19,9 +19,9 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Würth Baer Supply Company - B2B E-commerce',
-  description: 'Your trusted partner for industrial supplies and equipment.',
-  keywords: 'B2B, e-commerce, industrial supplies, equipment, Würth Baer Supply Company',
+  title: 'Würth Baer Supply Company',
+  description: 'Your trusted partner for woodworking and carpentry supplies and equipment.',
+  keywords: 'woodworking, carpentry, machinery, supplies, e-commerce, industrial supplies, equipment, Würth Baer Supply Company',
 }
 
 export default function RootLayout({
