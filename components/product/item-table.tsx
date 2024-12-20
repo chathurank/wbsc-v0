@@ -1,29 +1,39 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
-import { ChevronDown, ChevronUp, ShoppingCart, FileText, Heart, BarChart2 } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ItemDetailsAccordion } from "./item-details-accordion"
+import { ProductAttributesDialog } from "./product-attributes-dialog"
+import { ChevronRight, Minus, Plus, ShoppingCart, FileText, Heart, Scale } from 'lucide-react'
 import React from 'react'
 
-export interface Item {
+interface Item {
   id: string
   name: string
   price: number
+  originalPrice?: number
+  pricePerUnit: string
   sku: string
+  itemNumber: string
+  manufacturerNumber: string
   image: string
+  soldIn: string
+  catalog: string
   description: string
   availability: string
   minOrderQuantity: number
-  unitOfMeasure: string
-  priceScales?: {
-    quantity: number;
-    price: number;
-  }[];
+  location: string
+  stock: number
+  isLastChance?: boolean
+  hasPriceScales?: boolean
+  bulkPricing: {
+    quantity: number
+    price: number
+  }[]
 }
 
 interface ItemTableProps {
@@ -31,171 +41,250 @@ interface ItemTableProps {
   title: string
 }
 
+interface ItemAttributes {
+  itemNumber: string
+  manufacturerNumber: string
+  productType: string
+  catalog: string
+  finish: string
+  material: string
+  length: string
+  width: string
+  depth: string
+  boxQuantity: string
+}
+
 export function ItemTable({ items, title }: ItemTableProps) {
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [quantities, setQuantities] = useState<Record<string, number>>(
-    items.reduce((acc, item) => ({ ...acc, [item.id]: 1 }), {})
+    items.reduce((acc, item) => ({ ...acc, [item.id]: item.minOrderQuantity }), {})
   )
+  const [expandedItem, setExpandedItem] = useState<string | null>(null)
+  const [showAttributes, setShowAttributes] = useState(false)
+  const [selectedItemAttributes, setSelectedItemAttributes] = useState<ItemAttributes | null>(null)
 
-  const toggleItem = useCallback((id: string) => {
-    setExpandedItems(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    )
-  }, [])
-
-  const toggleSelectItem = useCallback((id: string) => {
+  const handleSelectItem = (itemId: string) => {
     setSelectedItems(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
     )
-  }, [])
-
-  const handleQuantityChange = useCallback((id: string, value: number) => {
-    setQuantities(prev => ({ ...prev, [id]: value }))
-  }, [])
-
-  const isAllSelected = items.length === selectedItems.length
-
-  const toggleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedItems([])
-    } else {
-      setSelectedItems(items.map(item => item.id))
-    }
   }
 
+  const handleSelectAll = () => {
+    setSelectedItems(
+      selectedItems.length === items.length ? [] : items.map(item => item.id)
+    )
+  }
+
+  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [itemId]: Math.max(items.find(item => item.id === itemId)?.minOrderQuantity || 1, newQuantity)
+    }))
+  }
+
+  const handleShowAttributes = (item: Item) => {
+    setSelectedItemAttributes({
+      itemNumber: item.itemNumber,
+      manufacturerNumber: item.manufacturerNumber,
+      productType: "Door Handle", // This would come from your data
+      catalog: item.catalog,
+      finish: "Anochrome", // This would come from your data
+      material: "12-Gauge Steel", // This would come from your data
+      length: "24\"", // This would come from your data
+      width: "7/8\"", // This would come from your data
+      depth: "11/16\"", // This would come from your data
+      boxQuantity: "5 EA" // This would come from your data
+    })
+    setShowAttributes(true)
+  }
+
+  const formatAttributes = (attributes: ItemAttributes) => [
+    { label: "Item #", value: attributes.itemNumber },
+    { label: "Mfr. #", value: attributes.manufacturerNumber },
+    { label: "Product type", value: attributes.productType },
+    { label: "Catalog", value: attributes.catalog, isLink: true },
+    { label: "Finish", value: attributes.finish },
+    { label: "Material", value: attributes.material },
+    { label: "Length", value: attributes.length },
+    { label: "Width", value: attributes.width },
+    { label: "Depth", value: attributes.depth },
+    { label: "Box qty", value: attributes.boxQuantity }
+  ]
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      <div className="mb-4 flex justify-between items-center">
-        <div>
-          <Checkbox
-            checked={isAllSelected}
-            onCheckedChange={toggleSelectAll}
-            id="select-all"
-          />
-          <label htmlFor="select-all" className="ml-2">
-            Select All
-          </label>
-        </div>
-        <div className="space-x-2">
-          <Button variant="outline" size="sm" disabled={selectedItems.length === 0}>
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Add to cart
-          </Button>
-          <Button variant="outline" size="sm" disabled={selectedItems.length === 0}>
-            <Heart className="w-4 h-4 mr-2" />
-            Add to wishlist
-          </Button>
-          <Button variant="outline" size="sm" disabled={selectedItems.length === 0}>
-            <BarChart2 className="w-4 h-4 mr-2" />
-            Compare
-          </Button>
-        </div>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">{title}</h2>
+      
+      <div className="flex gap-2">
+        <Button className="bg-red-600 hover:bg-red-700" disabled={selectedItems.length === 0}>
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Add items to cart
+        </Button>
+        <Button variant="outline">
+          <FileText className="mr-2 h-4 w-4" />
+          Add items to proposal
+        </Button>
+        <Button variant="outline">
+          <Heart className="mr-2 h-4 w-4" />
+          Add items to shopping list
+        </Button>
+        <Button variant="outline">Add to compare</Button>
       </div>
-      <Table className="border-collapse">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]"></TableHead>
-            <TableHead>Item</TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Availability</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <React.Fragment key={item.id}>
-              <TableRow>
-                <TableCell className="w-[50px]">
-                  <Checkbox
-                    checked={selectedItems.includes(item.id)}
-                    onCheckedChange={() => toggleSelectItem(item.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Image src={item.image} alt={item.name} width={50} height={50} className="rounded-md" />
-                    <span>{item.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{item.sku}</TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-semibold">${item.price.toFixed(2)}</span>
-                    {item.priceScales && item.priceScales.length > 0 && (
-                      <div className="text-xs text-muted-foreground">
-                        {item.priceScales.map((scale, index) => (
-                          <div key={index}>
-                            {scale.quantity}+: ${scale.price.toFixed(2)}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={item.availability === 'In Stock' ? 'default' : 'secondary'}>
-                    {item.availability}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={quantities[item.id]}
-                    onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
-                    className="w-20"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleItem(item.id);
-                    }}
-                  >
-                    {expandedItems.includes(item.id) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                </TableCell>
-              </TableRow>
-              {expandedItems.includes(item.id) && (
-                <TableRow key={`${item.id}-expanded`}>
-                  <TableCell colSpan={7}>
-                    <div className="p-4 bg-muted">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-semibold mb-2">Product Details</h4>
-                          <p className="text-sm">{item.description}</p>
-                          <Button variant="link" className="mt-2 p-0">
-                            <FileText className="w-4 h-4 mr-2" />
-                            View Details
-                          </Button>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold mb-2">Ordering Information</h4>
-                          <p className="text-sm">Minimum Order Quantity: {item.minOrderQuantity}</p>
-                          <p className="text-sm">Unit of Measure: {item.unitOfMeasure}</p>
-                        </div>
-                      </div>
+
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={selectedItems.length === items.length}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableHead className="w-[120px]">Qty.</TableHead>
+              <TableHead>Unit Price</TableHead>
+              <TableHead>Sold in</TableHead>
+              <TableHead>Catalog</TableHead>
+              <TableHead>Item #</TableHead>
+              <TableHead>Mfr. #</TableHead>
+              <TableHead>Product details</TableHead>
+              <TableHead className="w-[100px]">Attributes</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => (
+              <React.Fragment key={item.id}>
+                <TableRow 
+                  className={`border-b ${expandedItem === item.id ? 'bg-gray-50' : ''} cursor-pointer hover:bg-gray-50`}
+                  onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}
+                >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedItems.includes(item.id)}
+                      onCheckedChange={() => handleSelectItem(item.id)}
+                    />
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuantityChange(item.id, quantities[item.id] - 1)}
+                        disabled={quantities[item.id] <= item.minOrderQuantity}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        type="number"
+                        min={item.minOrderQuantity}
+                        value={quantities[item.id]}
+                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || item.minOrderQuantity)}
+                        className="w-16 text-center"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuantityChange(item.id, quantities[item.id] + 1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium">
+                        ${item.price.toFixed(2)}
+                        {item.hasPriceScales && '*'}
+                      </div>
+                      <div className="text-sm text-gray-500">{item.pricePerUnit}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{item.soldIn}</TableCell>
+                  <TableCell>
+                    <Button variant="link" className="h-auto p-0">
+                      {item.catalog}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Image 
+                        src={item.image} 
+                        alt={item.name} 
+                        width={40} 
+                        height={40} 
+                        className="rounded"
+                      />
+                      <div className="text-sm">{item.itemNumber}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{item.manufacturerNumber}</TableCell>
+                  <TableCell>
+                    <div className="font-normal text-left w-full">
+                      <div className="font-medium">{item.name}</div>
+                      <div className="text-sm text-gray-500">{item.description}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full justify-between"
+                      onClick={() => handleShowAttributes(item)}
+                    >
+                      Attributes
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              )}
-            </React.Fragment>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="flex justify-between mt-4">
-        <Button variant="outline">Add items to proposal</Button>
-        <Button variant="outline">Add items to shopping list</Button>
+                {expandedItem === item.id && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="p-0">
+                      <ItemDetailsAccordion
+                        details={{
+                          name: item.name,
+                          image: item.image,
+                          price: item.price,
+                          originalPrice: item.originalPrice,
+                          dimensions: item.description,
+                          pricePerUnit: parseFloat(item.pricePerUnit),
+                          unit: item.soldIn,
+                          bulkPricing: item.bulkPricing,
+                          stock: {
+                            status: item.availability,
+                            quantity: item.stock,
+                            location: item.location
+                          },
+                          isLastChance: item.isLastChance
+                        }}
+                        onClose={() => setExpandedItem(null)}
+                        onAddToCart={(quantity) => {
+                          console.log(`Adding ${quantity} of ${item.id} to cart`)
+                          setExpandedItem(null)
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
+            ))}
+          </TableBody>
+        </Table>
       </div>
+      
+      {items.some(item => item.hasPriceScales) && (
+        <div className="text-sm text-gray-500">
+          * Contains price scales
+        </div>
+      )}
+      {selectedItemAttributes && (
+        <ProductAttributesDialog
+          open={showAttributes}
+          onOpenChange={setShowAttributes}
+          attributes={formatAttributes(selectedItemAttributes)}
+        />
+      )}
     </div>
   )
 }

@@ -18,13 +18,14 @@ export function ProductGallery({ images }: ProductGalleryProps) {
 
   return (
     <div className="space-y-4">
-      {/* Main Image */}
       <div className="relative aspect-square">
         <Image
           src={images[currentImage].src}
           alt={images[currentImage].alt}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover rounded-lg"
+          priority
         />
         {images.length > 1 && (
           <>
@@ -35,6 +36,7 @@ export function ProductGallery({ images }: ProductGalleryProps) {
               onClick={() => setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
             >
               <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous image</span>
             </Button>
             <Button
               variant="ghost"
@@ -43,12 +45,12 @@ export function ProductGallery({ images }: ProductGalleryProps) {
               onClick={() => setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
             >
               <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next image</span>
             </Button>
           </>
         )}
       </div>
 
-      {/* Thumbnails */}
       {images.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
           {images.map((image, index) => (
@@ -64,8 +66,10 @@ export function ProductGallery({ images }: ProductGalleryProps) {
                 src={image.src}
                 alt={image.alt}
                 fill
+                sizes="80px"
                 className="object-cover"
               />
+              <span className="sr-only">View image {index + 1}</span>
             </button>
           ))}
         </div>
